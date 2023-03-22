@@ -90,14 +90,31 @@ def save_memory():
     long_term_memory.kg.write_to_gml("./long_term_memory.gml")
 
 
+def print_help():
+    print(
+        f"""These Mimir command are not Part of story telling:
+    :m - print memory
+    :w - save memory to files
+    :h, :help - print this help
+    :q, quit, exit - end program
+    """
+    )
+
+
 commands = {
     "--MEMORY": print_memory,
     ":m": print_memory,
     "--SAVE": save_memory,
     ":w": save_memory,
+    "--HELP": print_help,
+    ":help": print_help,
+    ":h": print_help,
+    ":q": exit,
 }
 
 exit_conditions = (":q", "quit", "exit")
+
+print_help()
 while True:
     query = input(f"{character_nick}> ")
     if query in exit_conditions:
