@@ -1,17 +1,18 @@
 from pprint import pprint
 from dotenv import load_dotenv
 from langchain.chains import ConversationChain
-from langchain.llms import OpenAI, OpenAIChat
-from langchain.memory import ConversationKGMemory, ConversationBufferWindowMemory
+from langchain.llms import OpenAI, OpenAIChat, HuggingFaceHub
+from langchain.memory import ConversationBufferWindowMemory
 from langchain.prompts.prompt import PromptTemplate
 
-from memory import MultiModel
+from memory import MultiModel, ConversationGraphMemory
 
 load_dotenv(override=True)
 
 ADA = "ada"
 BABBAGE = "babbage"
 GPT_35_TURBO = "gpt-3.5-turbo"
+GOOGLE_FREE = "google/flan-t5-xxl"
 
 
 def format_prompt(player_nick: str = "Player", dungeon_master="DM"):
@@ -29,7 +30,7 @@ When DM mentions new location entity DM includes provides these information:
 -if place is part of a larger territorial unit
 -location description
 
-The "Memories" section contains facts about campaign, DM thinks "Memories" section is DM's own memories about campaign.
+The "Memories" section contains facts about campaign, DM thinks "Memories" section is DM its own memories about campaign.
 
 Memories:
 {{long_term_memory}}
@@ -42,10 +43,15 @@ Conversation:
 
 AVG_SPEECH_TOKEN_PER_MINUTE = 120
 
-cheap_llm = OpenAI(temperature=0.0, model_name=GPT_35_TURBO, max_tokens=int(AVG_SPEECH_TOKEN_PER_MINUTE * 2))
-main_llm = OpenAIChat(temperature=0.3, model_name=GPT_35_TURBO, max_tokens=int(AVG_SPEECH_TOKEN_PER_MINUTE*1.5))
 
-long_term_memory = ConversationKGMemory(llm=cheap_llm, memory_key="long_term_memory")
+main_llm = OpenAIChat(temperature=0.3, model_name=GPT_35_TURBO, max_tokens=int(AVG_SPEECH_TOKEN_PER_MINUTE*1.5))
+#cheap_llm = OpenAI(temperature=0.0, model_name=GPT_35_TURBO, max_tokens=int(AVG_SPEECH_TOKEN_PER_MINUTE * 2))
+cheap_llm = HuggingFaceHub(
+    repo_id=GOOGLE_FREE,
+    model_kwargs=dict(temperature=0.0025,  max_tokens=int(AVG_SPEECH_TOKEN_PER_MINUTE * 2)),
+)
+
+long_term_memory = ConversationGraphMemory(llm=cheap_llm, memory_key="long_term_memory")
 short_term_memory = ConversationBufferWindowMemory(
     memory_key="short_term_memory",
     k=7,

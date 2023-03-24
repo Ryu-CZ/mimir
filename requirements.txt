@@ -5,3 +5,4 @@ openai
 langchain>=0.0.118
 pydantic
 python-dotenv
+huggingface_hub
