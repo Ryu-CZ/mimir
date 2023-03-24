@@ -78,4 +78,5 @@ venv_imp_ook/
 # Mimir project fragments
 *.gml
 *.json
+*.env
 

@@ -1,5 +1,5 @@
 from pprint import pprint
-
+from dotenv import load_dotenv
 from langchain.chains import ConversationChain
 from langchain.llms import OpenAI, OpenAIChat
 from langchain.memory import ConversationKGMemory, ConversationBufferWindowMemory
@@ -7,19 +7,31 @@ from langchain.prompts.prompt import PromptTemplate
 
 from memory import MultiModel
 
+load_dotenv(override=True)
+
+ADA = "ada"
 BABBAGE = "babbage"
 GPT_35_TURBO = "gpt-3.5-turbo"
 
 
 def format_prompt(player_nick: str = "Player", dungeon_master="DM"):
     return f"""The AI is Dungeon Master (DM) for users campaign. The campaign is set in the world of "Goblin Slayer" anime.
-DM prefers to use entity names instead of pronouns.
-When DM creates new non-player character DM provides character name, full name, detailed description and summary of characters personality.
-When DM mentions new location DM includes provides these information: full location name, if place is part of a larger territorial unit, location description.
+DM prefers to use entities names instead of pronouns.
 
-The AI takes in consideration additional information contained in the "Context" section.
+When DM creates new non-player character entity DM provides these information about new character: 
+-name
+-full name
+-summary of personality,
+-short description
 
-Context:
+When DM mentions new location entity DM includes provides these information: 
+-full location name
+-if place is part of a larger territorial unit
+-location description
+
+The "Memories" section contains facts about campaign, DM thinks "Memories" section is DM's own memories about campaign.
+
+Memories:
 {{long_term_memory}}
 
 Conversation:
@@ -30,8 +42,8 @@ Conversation:
 
 AVG_SPEECH_TOKEN_PER_MINUTE = 120
 
-cheap_llm = OpenAI(temperature=0.0, model_name=BABBAGE, max_tokens=int(AVG_SPEECH_TOKEN_PER_MINUTE * 2))
-main_llm = OpenAIChat(temperature=0.2, model_name=GPT_35_TURBO, max_tokens=int(AVG_SPEECH_TOKEN_PER_MINUTE))
+cheap_llm = OpenAI(temperature=0.0, model_name=GPT_35_TURBO, max_tokens=int(AVG_SPEECH_TOKEN_PER_MINUTE * 2))
+main_llm = OpenAIChat(temperature=0.3, model_name=GPT_35_TURBO, max_tokens=int(AVG_SPEECH_TOKEN_PER_MINUTE*1.5))
 
 long_term_memory = ConversationKGMemory(llm=cheap_llm, memory_key="long_term_memory")
 short_term_memory = ConversationBufferWindowMemory(
@@ -57,13 +69,15 @@ prompt = PromptTemplate(
 
 conversation = ConversationChain(
     llm=main_llm,
-    verbose=False,
+    verbose=True,
     prompt=prompt,
     memory=bio_memory,
 )
 
 short_term_memory.human_prefix = character_nick
 short_term_memory.ai_prefix = ai_prefix
+long_term_memory.human_prefix = character_nick
+long_term_memory.ai_prefix = ai_prefix
 
 intro_in = f"Good day to you, I want to create new character. Full name of my character is '{character_name}'. Just '{character_nick}' for a friends."
 intro_out = f"Ok {character_nick}. Your new character is {character_name}. I will be your Dungeon Master (DM)."
